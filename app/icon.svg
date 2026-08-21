@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Lumen">
+  <defs>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#eafffb"/>
+      <stop offset="55%" stop-color="#7fe3d8"/>
+      <stop offset="100%" stop-color="#4db6ac"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4db6ac" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#4db6ac" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Tile: matches the app background so the mark reads on light and dark browser chrome alike -->
+  <rect width="64" height="64" rx="15" fill="#0b0f14"/>
+
+  <!-- Light bleeding through the opening -->
+  <circle cx="32" cy="32" r="15" fill="url(#halo)"/>
+
+  <!-- The vessel wall, seen in cross-section -->
+  <circle cx="32" cy="32" r="17.5" fill="none" stroke="#4db6ac" stroke-width="6.5"/>
+
+  <!-- The lumen itself: the open channel, lit -->
+  <circle cx="32" cy="32" r="7.5" fill="url(#core)"/>
+</svg>
