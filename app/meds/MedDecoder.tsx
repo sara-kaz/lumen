@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { IrisSays, LevelPicker } from "@/components/Iris";
 import { BottomLine, Collapsible } from "@/components/Collapsible";
+import { Feedback } from "@/components/Feedback";
 import { LEVEL_COPY, LEVELS, type ExpertiseLevel } from "@/lib/explain";
 import type { Identification, MedsExplanation } from "@/lib/meds";
 
@@ -269,6 +270,8 @@ export default function MedDecoder() {
           Iris never tells you to start, stop or change a medication. Your pharmacist can
           see the whole picture; Iris cannot.
         </div>
+
+        <Feedback tool="meds" />
 
         <button
           onClick={reset}

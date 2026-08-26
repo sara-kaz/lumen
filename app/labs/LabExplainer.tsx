@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { IrisSays, LevelPicker } from "@/components/Iris";
 import { BottomLine, Collapsible } from "@/components/Collapsible";
+import { Feedback } from "@/components/Feedback";
 import { LEVEL_COPY, LEVELS, type ExpertiseLevel, type Explanation } from "@/lib/explain";
 
 const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.gif";
@@ -283,6 +284,8 @@ export default function LabExplainer() {
           rest of your history, and is not a substitute for the clinician who ordered
           these tests.
         </div>
+
+        <Feedback tool="labs" />
 
         <button
           onClick={reset}

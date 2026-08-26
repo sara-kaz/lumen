@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IrisSays, Section } from "@/components/Iris";
 import { BottomLine, Collapsible } from "@/components/Collapsible";
+import { Feedback } from "@/components/Feedback";
 import type { Triage } from "@/lib/triage";
 import type { Place } from "@/lib/places";
 
@@ -361,6 +362,8 @@ export default function CareFinder() {
           diagnose you, cannot examine you, and never recommends medication. If you feel
           worse or something changes, act on that rather than on this page.
         </div>
+
+        <Feedback tool="care" />
 
         <button
           onClick={() => setResult(null)}
