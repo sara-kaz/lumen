@@ -1,4 +1,5 @@
 import { MODEL } from "@/lib/anthropic";
+import { storeConfigured } from "@/lib/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export async function GET() {
     ok: key.present && key.hasExpectedPrefix && !key.hasSurroundingQuotes && !key.hasWhitespace,
     model: MODEL,
     key,
+    feedbackStore: storeConfigured() ? "configured" : "log-only (not durable)",
     // Confirms which build is actually serving traffic.
     commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? "local",
     region: process.env.VERCEL_REGION ?? "local",

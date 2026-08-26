@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { checkLimit, type Limit } from "@/lib/ratelimit";
+import { appendFeedback, readFeedback, storeConfigured } from "@/lib/store";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const FEEDBACK: Limit = { requests: 5, windowMs: 60 * 60_000 };
 
@@ -12,13 +14,6 @@ const Body = z.object({
   contact: z.string().max(200).optional(),
 });
 
-/**
- * Feedback capture without a database.
- *
- * Structured JSON to the platform log, which is searchable and retained — enough to
- * evidence real usage and read what people actually said, without standing up
- * storage for a launch window. Move to a real store if this outlives the launch.
- */
 export async function POST(req: Request) {
   const limited = checkLimit(req, "feedback", FEEDBACK);
   if (limited) return limited;
@@ -28,10 +23,31 @@ export async function POST(req: Request) {
     return Response.json({ error: "Couldn't send that." }, { status: 400 });
   }
 
-  console.log(
-    "LUMEN_FEEDBACK " +
-      JSON.stringify({ ...parsed.data, at: new Date().toISOString() }),
-  );
+  const stored = await appendFeedback({ ...parsed.data, at: new Date().toISOString() });
+  return Response.json({ ok: true, stored });
+}
 
-  return Response.json({ ok: true });
+/**
+ * Read back collected feedback. Gated on a secret and fails CLOSED — if ADMIN_TOKEN
+ * is unset the endpoint is disabled entirely rather than open, because people leave
+ * free-text health context and an email address in here.
+ */
+export async function GET(req: Request) {
+  const secret = process.env.ADMIN_TOKEN;
+  if (!secret) {
+    return Response.json({ error: "Not available." }, { status: 404 });
+  }
+  if (new URL(req.url).searchParams.get("token") !== secret) {
+    return Response.json({ error: "Not available." }, { status: 404 });
+  }
+
+  const entries = await readFeedback();
+  return Response.json({
+    storeConfigured: storeConfigured(),
+    total: entries.length,
+    helpful: entries.filter((e) => e.helpful === "yes").length,
+    notHelpful: entries.filter((e) => e.helpful === "no").length,
+    withComment: entries.filter((e) => e.message?.trim()).length,
+    entries,
+  });
 }
