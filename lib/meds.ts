@@ -98,7 +98,7 @@ Transcribe only what is actually legible. If a name is blurred, partly hidden, o
 
 Read the drug NAME, not the pharmacy's patient name or address. Ignore any personal details on a dispensing label; you only need the medicine.
 
-If several medicines are visible, list each one separately. If the image shows loose pills with no packaging, you generally cannot identify them from appearance alone — set isMedication true but return an empty medications array and explain in notMedicationReason that loose tablets can't be identified safely from a photo.`;
+If several medicines are visible, list each one separately. When you are given more than one image, treat them as one collection: the same box often appears in two photos from different angles, so list each distinct medicine ONCE rather than once per image. If the image shows loose pills with no packaging, you generally cannot identify them from appearance alone — set isMedication true but return an empty medications array and explain in notMedicationReason that loose tablets can't be identified safely from a photo.`;
 
 const LEVEL_INSTRUCTIONS: Record<ExpertiseLevel, string> = {
   none: `The reader has NO medical background. Everyday words only. If a term is printed on their box and unavoidable, translate it immediately. Short sentences. Never use "contraindicated", "potentiate", "adverse event", "concomitant" or "efficacy".`,

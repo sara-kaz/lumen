@@ -9,11 +9,19 @@ export const maxDuration = 120;
 
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
 
+/** People photograph a cabinet, not a box — several images per request is the norm. */
+const MAX_IMAGES = 6;
+
 const Body = z.object({
-  file: z.object({
-    mediaType: z.enum(IMAGE_TYPES),
-    data: z.string().max(11_000_000),
-  }),
+  files: z
+    .array(
+      z.object({
+        mediaType: z.enum(IMAGE_TYPES),
+        data: z.string().max(11_000_000),
+      }),
+    )
+    .min(1)
+    .max(MAX_IMAGES),
 });
 
 /**
@@ -26,7 +34,10 @@ export async function POST(req: Request) {
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return Response.json({ error: "Attach a photo of the medication." }, { status: 400 });
+    return Response.json(
+      { error: `Attach between 1 and ${MAX_IMAGES} photos of your medication.` },
+      { status: 400 },
+    );
   }
 
   try {
@@ -38,16 +49,24 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
+          // All images in a single request so the model can de-duplicate across
+          // photos — the same box often appears twice from different angles.
           content: [
-            {
-              type: "image",
+            ...parsed.data.files.map((f) => ({
+              type: "image" as const,
               source: {
-                type: "base64",
-                media_type: parsed.data.file.mediaType,
-                data: parsed.data.file.data,
+                type: "base64" as const,
+                media_type: f.mediaType,
+                data: f.data,
               },
+            })),
+            {
+              type: "text" as const,
+              text:
+                parsed.data.files.length === 1
+                  ? "What medications can you read in this image?"
+                  : `What medications can you read across these ${parsed.data.files.length} images? List each distinct medicine once, even if it appears in more than one photo.`,
             },
-            { type: "text", text: "What medications can you read in this image?" },
           ],
         },
       ],

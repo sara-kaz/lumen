@@ -7,6 +7,8 @@ import { Feedback } from "@/components/Feedback";
 import { LEVEL_COPY, LEVELS, type ExpertiseLevel } from "@/lib/explain";
 import type { Identification, MedsExplanation } from "@/lib/meds";
 
+const MAX_BYTES = 8 * 1024 * 1024;
+
 type Source = {
   input: string;
   resolved: string | null;
@@ -47,6 +49,7 @@ export default function MedDecoder() {
   const [level, setLevel] = useState<ExpertiseLevel>("some");
   const [phase, setPhase] = useState<"input" | "confirm" | "result">("input");
   const [typed, setTyped] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
   const [names, setNames] = useState<string[]>([]);
   const [identifyNote, setIdentifyNote] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -61,24 +64,37 @@ export default function MedDecoder() {
       .filter(Boolean);
   }
 
-  async function onPhoto(file: File) {
+  const MAX_PHOTOS = 6;
+
+  function addPhotos(list: FileList) {
+    const incoming = Array.from(list).filter((f) => f.size <= MAX_BYTES);
+    if (incoming.length < list.length) {
+      setError("Some photos were over 8 MB and were skipped.");
+    }
+    setPhotos((prev) => [...prev, ...incoming].slice(0, MAX_PHOTOS));
+  }
+
+  async function readPhotos() {
+    if (photos.length === 0 || loading) return;
     setLoading("reading");
     setError(null);
     setIdentifyNote(null);
     try {
+      const files = await Promise.all(
+        photos.map(async (f) => ({ mediaType: f.type, data: await fileToBase64(f) })),
+      );
       const res = await fetch("/api/meds/identify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file: { mediaType: file.type, data: await fileToBase64(file) },
-        }),
+        body: JSON.stringify({ files }),
       });
       const data: Identification & { error?: string } = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Couldn't read that image.");
 
       if (!data.isMedication || data.medications.length === 0) {
         setIdentifyNote(
-          data.notMedicationReason || "I couldn't find a medication name in that photo.",
+          data.notMedicationReason ||
+            `I couldn't find a medication name in ${photos.length === 1 ? "that photo" : "those photos"}.`,
         );
         setLoading(null);
         return;
@@ -127,6 +143,7 @@ export default function MedDecoder() {
   function reset() {
     setPhase("input");
     setTyped("");
+    setPhotos([]);
     setNames([]);
     setResult(null);
     setError(null);
@@ -392,18 +409,68 @@ export default function MedDecoder() {
           <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
             Or photograph the boxes
           </p>
+          <p className="mt-1.5 text-sm text-muted">
+            Add up to {MAX_PHOTOS} photos — one box at a time is fine, and they&apos;re all
+            read together.
+          </p>
+
+          {photos.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {photos.map((f, i) => (
+                <li
+                  key={`${f.name}-${i}`}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3.5 py-2"
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm">{f.name}</span>
+                  <span className="shrink-0 font-mono text-[11px] text-muted">
+                    {(f.size / 1024 / 1024).toFixed(1)} MB
+                  </span>
+                  <button
+                    onClick={() => setPhotos(photos.filter((_, j) => j !== i))}
+                    aria-label={`Remove ${f.name}`}
+                    className="shrink-0 text-xs text-muted underline hover:text-danger"
+                  >
+                    remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
           <input
             ref={fileInput}
             type="file"
+            multiple
             aria-label="Photograph your medication packaging"
             accept=".png,.jpg,.jpeg,.webp,.gif"
             onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void onPhoto(f);
+              if (e.target.files?.length) addPhotos(e.target.files);
+              // Reset so the same file can be picked again after removing it.
+              e.target.value = "";
             }}
-            className="mt-2.5 block w-full max-w-xs text-sm text-muted file:mr-3 file:rounded-md file:border file:border-border file:bg-surface file:px-3 file:py-1.5 file:text-sm file:text-foreground hover:file:border-accent-dim"
+            disabled={photos.length >= MAX_PHOTOS}
+            className="mt-3 block w-full max-w-xs text-sm text-muted file:mr-3 file:rounded-md file:border file:border-border file:bg-surface file:px-3 file:py-1.5 file:text-sm file:text-foreground hover:file:border-accent-dim disabled:opacity-40"
           />
-          <p className="mt-2 text-xs text-muted">
+
+          {photos.length >= MAX_PHOTOS && (
+            <p className="mt-2 text-xs text-warn">
+              That&apos;s the maximum. Remove one to add another.
+            </p>
+          )}
+
+          {photos.length > 0 && (
+            <button
+              onClick={() => void readPhotos()}
+              disabled={loading !== null}
+              className="mt-4 rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-background transition-opacity disabled:opacity-40"
+            >
+              {loading === "reading"
+                ? "Reading your photos…"
+                : `Read ${photos.length} photo${photos.length === 1 ? "" : "s"}`}
+            </button>
+          )}
+
+          <p className="mt-3 text-xs text-muted">
             You&apos;ll get to check what I read before anything is looked up.
           </p>
         </div>
