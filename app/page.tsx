@@ -143,7 +143,16 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="mt-14 border-t border-border pt-6 text-xs leading-relaxed text-muted">
+      <div className="mt-12 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-border pt-6">
+        <p className="text-sm text-muted">
+          How Lumen was built — the architecture, the trade-offs, and the bugs.
+        </p>
+        <Link href="/journal" className="text-sm text-accent hover:underline">
+          Read the build journal →
+        </Link>
+      </div>
+
+      <footer className="mt-10 border-t border-border pt-6 text-xs leading-relaxed text-muted">
         Lumen is an information tool. It does not diagnose, never tells you to start or
         stop a medication, and is not a substitute for your clinician or pharmacist.{" "}
         <strong className="text-foreground">

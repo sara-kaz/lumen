@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
+    "marked": "^18.0.11",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",

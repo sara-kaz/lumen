@@ -2,7 +2,7 @@
 
 *Building Lumen, part 4 of 4*
 
-Lumen is live and free: **[URL]**
+Lumen is live and free: **https://lumen-virid-sigma.vercel.app**
 
 Three tools for three moments most people have had.
 
@@ -57,7 +57,7 @@ I can't generate myself.
 
 It's free, there's no sign-up, and nothing is stored.
 
-**[URL]**
+**https://lumen-virid-sigma.vercel.app**
 
 *None of this replaces your doctor. It's about not spending the hours before you see
 them frightened by things nobody took the time to explain — and walking in able to
