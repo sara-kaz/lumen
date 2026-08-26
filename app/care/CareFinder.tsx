@@ -262,7 +262,7 @@ export default function CareFinder() {
         )}
 
         {result.whatToWatchFor.length > 0 && (
-          <Section title="Get seen straight away if any of this happens">
+          <Section title="What would change this answer">
             <ul className="space-y-2.5 rounded-lg border border-warn/40 bg-warn/5 px-5 py-4">
               {result.whatToWatchFor.map((w, i) => (
                 <li key={i} className="flex gap-3 text-[15px] leading-relaxed">
@@ -380,9 +380,9 @@ export default function CareFinder() {
         <span className="text-accent">if this can wait.</span>
       </h1>
       <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted">
-        Tell me what&apos;s going on. I&apos;ll tell you how urgently you should be seen,
-        exactly what would change that answer, and where the nearest place that can help
-        actually is. I won&apos;t tell you what you have — I can&apos;t examine you, and
+        Tell me what&apos;s going on. I&apos;ll help you work out how urgently you should
+        seek care, exactly what would change that answer, and where the nearest place
+        that can help actually is. I won&apos;t tell you what you have — I can&apos;t examine you, and
         guessing is how people talk themselves out of care they need.
       </p>
 

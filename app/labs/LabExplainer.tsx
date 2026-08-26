@@ -43,6 +43,50 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/**
+ * The at-a-glance tally.
+ *
+ * Reports focus attention on flagged values, so people finish reading convinced
+ * everything is wrong. Showing how many were fine — first, and by count — is the
+ * single cheapest piece of reassurance this page can offer, and it is true.
+ */
+function Glance({ analytes }: { analytes: Explanation["analytes"] }) {
+  const fine = analytes.filter((a) => a.status === "normal").length;
+  const watch = analytes.filter((a) => a.status === "borderline").length;
+  const flagged = analytes.filter((a) => a.status === "low" || a.status === "high").length;
+  const unknown = analytes.filter((a) => a.status === "unknown").length;
+
+  const rows = [
+    { n: fine, label: fine === 1 ? "result within the range on your report" : "results within the ranges on your report", dot: "bg-accent", tone: "text-accent" },
+    { n: watch, label: watch === 1 ? "result worth discussing" : "results worth discussing", dot: "bg-warn/70", tone: "text-warn" },
+    { n: flagged, label: flagged === 1 ? "result outside the range" : "results outside the ranges", dot: "bg-warn", tone: "text-warn" },
+    { n: unknown, label: unknown === 1 ? "result with no range printed" : "results with no range printed", dot: "bg-muted", tone: "text-muted" },
+  ].filter((r) => r.n > 0);
+
+  return (
+    <div className="mt-6 rounded-lg border border-border bg-surface px-5 py-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+        Your results at a glance
+      </p>
+      <ul className="mt-3 space-y-2">
+        {rows.map((r) => (
+          <li key={r.label} className="flex items-baseline gap-3 text-[15px]">
+            <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${r.dot}`} aria-hidden="true" />
+            <span>
+              <span className={`font-medium ${r.tone}`}>{r.n}</span>{" "}
+              <span className="text-muted">{r.label}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3.5 border-t border-border pt-3 text-xs leading-relaxed text-muted">
+        Counted against the reference ranges printed on your own report — not against
+        any range Lumen supplied.
+      </p>
+    </div>
+  );
+}
+
 export default function LabExplainer() {
   const [level, setLevel] = useState<ExpertiseLevel>("some");
   const [text, setText] = useState("");
@@ -140,6 +184,8 @@ export default function LabExplainer() {
             {result.bottomLine}
           </BottomLine>
         </div>
+
+        <Glance analytes={result.analytes} />
 
         <Collapsible title="Why I'm saying that">
           <p className="text-[15px] leading-relaxed text-muted">{result.urgencyReason}</p>

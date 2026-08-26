@@ -204,7 +204,10 @@ export default function MedDecoder() {
                   </p>
                   <p className="mt-2 text-[15px] leading-relaxed text-muted">{f.whatHappens}</p>
                   <blockquote className="mt-3 border-l-2 border-accent-dim bg-surface-2 px-3.5 py-2.5">
-                    <p className="text-[13px] leading-relaxed text-muted">“{f.sourceQuote}”</p>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+                      Why Lumen flagged this
+                    </p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-muted">“{f.sourceQuote}”</p>
                     <cite className="mt-1.5 block font-mono text-[10px] not-italic text-muted">
                       — FDA label, {f.sourceDrug}
                     </cite>

@@ -29,13 +29,13 @@ const DOORS = [
     href: "/care",
     icon: CompassIcon,
     question: "Should I get this checked?",
-    body: "How urgently you need to be seen, what would change that answer, and where the nearest place that helps actually is.",
+    body: "How urgently to seek care, what would change that answer, and where the nearest place that helps actually is.",
     detail: "Real clinic and ER locations",
   },
 ];
 
 const PROMISES = [
-  { title: "Never diagnoses you", body: "Naming a condition is your clinician's job." },
+  { title: "Lumen doesn't diagnose you", body: "It can't examine you, and guessing is how people talk themselves out of care." },
   { title: "Nothing is stored", body: "Used to answer your question, then gone." },
   { title: "No account, no sign-up", body: "Open it, use it, close it." },
 ];

@@ -73,8 +73,10 @@ export async function POST(req: Request) {
           );
         }
       } catch (err) {
-        const message =
-          err instanceof Anthropic.APIError
+        const raw = String((err as { message?: string })?.message ?? "");
+        const message = /ANTHROPIC_API_KEY|apiKey|authentication/i.test(raw)
+          ? "[Lumen isn't configured correctly right now. This is on our side, not yours.]"
+          : err instanceof Anthropic.APIError
             ? `[Simulation error ${err.status}. Try again.]`
             : "[Simulation error. Try again.]";
         controller.enqueue(encoder.encode(`\n\n${message}`));
