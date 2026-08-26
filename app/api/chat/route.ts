@@ -55,16 +55,27 @@ export async function POST(req: Request) {
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let emitted = 0;
       try {
         for await (const event of stream) {
           if (
             event.type === "content_block_delta" &&
             event.delta.type === "text_delta"
           ) {
+            emitted += event.delta.text.length;
             controller.enqueue(encoder.encode(event.delta.text));
           }
         }
         const final = await stream.finalMessage();
+
+        // A stream that ends having produced no text at all is indistinguishable
+        // from a hung request on the client. Say something rather than nothing.
+        if (emitted === 0 && final.stop_reason !== "refusal") {
+          controller.enqueue(
+            encoder.encode("[The patient didn't respond. Ask again.]"),
+          );
+        }
+
         if (final.stop_reason === "refusal") {
           controller.enqueue(
             encoder.encode(

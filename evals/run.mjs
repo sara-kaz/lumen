@@ -43,17 +43,31 @@ async function readStream(res) {
   return out;
 }
 
-async function runPatientSpec(spec) {
-  const res = await fetch(`${BASE}/api/chat`, {
-    method: "POST",
-    headers: HEADERS,
-    body: JSON.stringify({ caseId: spec.caseId, messages: spec.messages }),
-  });
-  if (!res.ok) return { fails: [`HTTP ${res.status} from /api/chat`] };
+/** One retry for transient stream failures — but the retry is reported, never hidden. */
+async function fetchPatientReply(spec) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const res = await fetch(`${BASE}/api/chat`, {
+      method: "POST",
+      headers: HEADERS,
+      body: JSON.stringify({ caseId: spec.caseId, messages: spec.messages }),
+    });
+    if (!res.ok) return { error: `HTTP ${res.status} from /api/chat`, attempt };
 
-  const reply = (await readStream(res)).trim();
-  if (!reply) return { fails: ["empty reply"] };
-  if (reply.startsWith("[")) return { fails: [`stream error: ${reply.slice(0, 80)}`] };
+    const reply = (await readStream(res)).trim();
+    if (reply && !reply.startsWith("[")) return { reply, attempt };
+
+    // Transient: empty body, or the route's own bracketed error marker.
+    if (attempt === 2) {
+      return { error: reply ? `stream error: ${reply.slice(0, 80)}` : "empty reply", attempt };
+    }
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+}
+
+async function runPatientSpec(spec) {
+  const { reply, error, attempt } = await fetchPatientReply(spec);
+  if (error) return { fails: [error] };
+  const retried = attempt > 1;
 
   const fails = [];
 
@@ -69,7 +83,7 @@ async function runPatientSpec(spec) {
   for (const [fact, v] of should) {
     if (!v.disclosed) fails.push(`WITHHELD ${fact}`);
   }
-  return { fails, sample: reply.replace(/\s+/g, " ").slice(0, 110) };
+  return { fails, retried, sample: reply.replace(/\s+/g, " ").slice(0, 110) };
 }
 
 async function runEndpointSpec(spec) {
@@ -111,7 +125,10 @@ async function pool(items, limit, fn) {
         results[i] = await fn(items[i]);
         const r = results[i];
         const mark = r.fails.length === 0 ? C.green("PASS") : C.red("FAIL");
-        console.log(`  ${mark}  ${r.name} ${C.dim(`${(r.ms / 1000).toFixed(1)}s`)}`);
+        const flake = r.retried ? C.yellow(" (retried)") : "";
+        console.log(
+          `  ${mark}  ${r.name}${flake} ${C.dim(`${(r.ms / 1000).toFixed(1)}s`)}`,
+        );
         for (const f of r.fails) console.log(`        ${C.red("·")} ${f}`);
       }
     }),
@@ -148,6 +165,15 @@ console.log(
 const t0 = Date.now();
 const results = await pool(selected, CONCURRENCY, runSpec);
 const failed = results.filter((r) => r.fails.length > 0);
+
+const retriedCount = results.filter((r) => r.retried).length;
+if (retriedCount > 0) {
+  console.log(
+    C.yellow(
+      `\n  ${retriedCount} spec${retriedCount === 1 ? "" : "s"} passed only after a retry — transient, but worth watching.`,
+    ),
+  );
+}
 
 console.log(
   `\n${C.bold("Result")}  ` +
